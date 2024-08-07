@@ -1,9 +1,7 @@
 "use client"
-import React from 'react';
-import { Metadata } from 'next';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { useState } from 'react';
 import { Wrapper } from '@/components/wrapper';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -13,6 +11,7 @@ import { Input } from '@/components/ui/input';
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -24,20 +23,21 @@ const LoginPage = () => {
         });
 
         if (result?.error) {
-            // Handle errors here
-            console.error(result.error);
+            // Set error message on failure
+            setError('Incorrect email or password. Please try again.');
         } else {
+            // Clear error message on success
+            setError('');
             // Redirect to dashboard on success
             router.push('/dashboard');
         }
     };
 
-
     return (
         <Wrapper className="flex flex-col items-center justify-center max-w-lg min-h-screen py-12">
-            <Heading>Welcome !</Heading>
+            <Heading>Welcome!</Heading>
             <p className='text-sm mt-2 text-center'>Enter Your Email Address And Password To Access <span className='text-app-red font-medium'>Mkhasa</span> Admin Panel</p>
-            <form onSubmit={handleSubmit} className="w-[90%] md:w-[60%] mx-auto mt-5 gap-3 flex flex-col">
+            <form onSubmit={handleSubmit} className="w-[90%] md:w-[60%] mx-auto mt-5 gap-3 flex flex-col">                
                 <div className="text-left md:text-center">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -55,6 +55,11 @@ const LoginPage = () => {
                         onChange={(e) => setPassword(e.target.value)}
                     />
                 </div>
+                {error && (
+                    <div className="text-red-500 text-sm text-center mb-4">
+                        {error}
+                    </div>
+                )}
 
                 <Button
                     className="w-full rounded-none py-[10px] flex justify-center bg-black text-base text-white font-bold mt-5"

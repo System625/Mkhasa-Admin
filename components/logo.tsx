@@ -8,7 +8,7 @@ interface WrapperProps {
 
 export const Logo = ({ backGroundColor }: WrapperProps) => {
     return (
-      <Link href="/" aria-label="Navigate to home page">
+      <Link href="/dashboard" aria-label="Navigate to home page">
         <div className={"flex gap-x-2 items-center"}>
           <Image
             src={logoImg}

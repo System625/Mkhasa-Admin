@@ -16,37 +16,37 @@ const Sidebar = () => {
           </Link>
         </li>
         <li>
-          <Link href="/item">
+          <Link href="/dashboard/item">
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Item</span>
           </Link>
         </li>
         <li>
-          <Link href="/inventory">
+          <Link href="/dashboard/inventory">
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Inventory</span>
           </Link>
         </li>
         <li>
-          <Link href="/categories">
+          <Link href="/dashboard/category">
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Categories</span>
           </Link>
         </li>
         <li>
-          <Link href="/slides">
+          <Link href="/dashboard/slides">
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Slides</span>
           </Link>
         </li>
         <li>
-          <Link href="/customers">
+          <Link href="/dashboard/customers">
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Customers</span>
           </Link>
         </li>
         <li>
-          <Link href="/vendor">
-            <span className="p-3 cursor-pointer hover:bg-gray-200 block">Vendor</span>
+          <Link href="/dashboard/vendors">
+            <span className="p-3 cursor-pointer hover:bg-gray-200 block">Vendors</span>
           </Link>
         </li>
         <li>
-          <Link href="/settings">
+          <Link href="/dashboard/settings">
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Settings</span>
           </Link>
         </li>
