@@ -1,11 +1,12 @@
 import React from 'react';
-import { Wrapper } from '@/components/wrapper'; 
-import { Heading } from '@/components/heading';
+import { Wrapper } from '@/components/wrapper';
+import CategoryTable from '@/components/categoryTable';
 
 const CategoryPage = () => {
+
   return (
     <Wrapper>
-      <Heading>Categories</Heading>      
+      <CategoryTable/>
     </Wrapper>
   );
 };

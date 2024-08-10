@@ -1,11 +1,11 @@
 import React from 'react';
 import { Wrapper } from '@/components/wrapper'; 
-import { Heading } from '@/components/heading';
+import VendorManagement from '@/components/vendorManagement';
 
 const VendorsPage = () => {
   return (
     <Wrapper>
-      <Heading>Vendors</Heading>      
+      <VendorManagement/>    
     </Wrapper>
   );
 };

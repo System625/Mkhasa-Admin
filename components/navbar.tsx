@@ -1,27 +1,22 @@
-"use client"
-
-import { Wrapper } from "./wrapper";
-import Link from "next/link";
-import { useState } from "react";
-import { Logo } from "./logo";
-import { Icon } from "@iconify/react";
-import { useRouter } from "next/navigation";
-
-// Define types for NavbarIcons component props
-interface NavbarIconsProps {
-  isDropdownOpen: boolean;
-  setIsDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isDropdownOpenfor: boolean;
-  setIsDropdownOpenfor: React.Dispatch<React.SetStateAction<boolean>>;
-}
+import { useState } from 'react';
+import Link from 'next/link';
+import { Icon } from '@iconify/react';
+import { useRouter } from 'next/navigation';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { VendorModal } from './vendorModal';
+import { Wrapper } from './wrapper';
+import { Logo } from './logo';
 
 interface AdminNavbarProps {
   toggleMobileSidebar: () => void;
 }
 
 const AdminNavbar: React.FC<AdminNavbarProps> = ({ toggleMobileSidebar }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isDropdownOpenfor, setIsDropdownOpenfor] = useState(false);
   const router = useRouter();
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -40,15 +35,10 @@ const AdminNavbar: React.FC<AdminNavbarProps> = ({ toggleMobileSidebar }) => {
             <button onClick={toggleMobileSidebar} className="mr-2 lg:hidden">
               <Icon icon="heroicons-outline:menu" className="text-2xl" />
             </button>
-            <Logo backGroundColor={""} />
+            <Logo backGroundColor={''} />
           </div>
           <div className="flex items-center gap-4 lg:hidden">
-            <NavbarIcons
-              isDropdownOpen={isDropdownOpen}
-              setIsDropdownOpen={setIsDropdownOpen}
-              isDropdownOpenfor={isDropdownOpenfor}
-              setIsDropdownOpenfor={setIsDropdownOpenfor}
-            />
+            <NavbarIcons />
           </div>
         </div>
         {/* Form appears in both */}
@@ -70,79 +60,65 @@ const AdminNavbar: React.FC<AdminNavbarProps> = ({ toggleMobileSidebar }) => {
         </form>
         {/* Desktop Navbar */}
         <div className="hidden lg:flex items-center gap-4">
-          <NavbarIcons
-            isDropdownOpen={isDropdownOpen}
-            setIsDropdownOpen={setIsDropdownOpen}
-            isDropdownOpenfor={isDropdownOpenfor}
-            setIsDropdownOpenfor={setIsDropdownOpenfor}
-          />
+          <NavbarIcons />
         </div>
       </nav>
     </Wrapper>
   );
 };
 
-const NavbarIcons: React.FC<NavbarIconsProps> = ({
-  isDropdownOpen,
-  setIsDropdownOpen,
-  isDropdownOpenfor,
-  setIsDropdownOpenfor,
-}) => (
-  <>
+const NavbarIcons: React.FC = () => {
+  const [isVendorModalOpen, setVendorModalOpen] = useState(false);
+
+  const openModal = () => setVendorModalOpen(true);
+  const closeModal = () => setVendorModalOpen(false);
+
+  return (
     <div className="flex gap-5 lg:gap-10 justify-between items-center">
-      <div className="relative top-1">
-        <button onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-          <Icon icon="jam:write" style={{ fontSize: 24 }} />
-        </button>
-        {isDropdownOpen && (
-          <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
-            <ul>
-              <li>
-                <Link href="/admin/edit-product" className="block px-4 py-2 hover:bg-gray-100">
-                  Edit Product
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/edit-price" className="block px-4 py-2 hover:bg-gray-100">
-                  Edit Price
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/edit-vendor" className="block px-4 py-2 hover:bg-gray-100">
-                  Edit Vendor
-                </Link>
-              </li>
-            </ul>
-          </div>
-        )}
-      </div>
-      <div className="relative top-1">
-        <button onClick={() => setIsDropdownOpenfor(!isDropdownOpenfor)}>
-          <Icon icon="mdi:plus" className="rounded-full bg-app-ash" style={{ fontSize: 24 }} />
-        </button>
-        {isDropdownOpenfor && (
-          <div className="absolute left-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
-            <ul>
-              <li>
-                <Link href="/admin/add-product" className="block px-4 py-2 hover:bg-gray-100">
-                  Add Product
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/add-vendor" className="block px-4 py-2 hover:bg-gray-100">
-                  Add Vendor
-                </Link>
-              </li>
-            </ul>
-          </div>
-        )}
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="relative top-1">
+            <Icon icon="jam:write" style={{ fontSize: 24 }} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-48">
+          <DropdownMenuItem asChild>
+            <Link href="/admin/edit-product">Edit Product</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/admin/edit-price">Edit Price</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/admin/edit-vendor">Edit Vendor</Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="relative top-1">
+            <Icon icon="mdi:plus" className="rounded-full bg-app-ash" style={{ fontSize: 24 }} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-48">
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/add-product">Add Product</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={openModal}>
+            <span>Add Vendor</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <Link href="/admin/user" className="flex items-center gap-2">
         <Icon icon="mdi:account" style={{ fontSize: 24 }} />
         <span>User</span>
       </Link>
+
+      {/* Vendor Modal */}
+      <VendorModal isOpen={isVendorModalOpen} onClose={closeModal} />
     </div>
-  </>
-);
+  );
+};
 
 export default AdminNavbar;

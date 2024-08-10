@@ -65,7 +65,7 @@ const UserManagement = () => {
                                             <AvatarImage src={user.avatar} alt={user.userName} />
                                             <AvatarFallback>{user.userName.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <div className={`absolute bottom-0 right-2 w-3 h-3 rounded-full border-2 border-white ${user.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                        <div className={`absolute bottom-0 right-2 w-3 h-3 rounded-full border-2 border-white ${user.status === 'active' ? 'bg-green-500' : 'bg-red-600'}`}></div>
                                     </div>
                                     <div>
                                         <p className="font-bold">{user.userName}</p>

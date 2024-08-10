@@ -19,6 +19,10 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Icon } from "@iconify/react";
+import OrderStatistics from '@/components/orderStat';
+import { Heading } from '@/components/heading';
+import { SubHeading } from './subHeading';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Order {
     id: number;
@@ -186,6 +190,30 @@ const OrderTable = () => {
 
     return (
         <div key={windowWidth}>
+            <div className='flex justify-between items-center'>
+                <div>
+                    <Heading>Order</Heading>
+                    <SubHeading className='flex items-center gap-1 mt-3'>
+                        Category
+                        <Icon icon="icon-park-outline:double-right" className="text-sm text-gray-500" />
+                        Order
+                    </SubHeading>
+                </div>
+                <div>
+                    <Select>
+                        <SelectTrigger className='bg-[#3B9BCE] text-white rounded-none gap-2'>
+                            <SelectValue placeholder="Filter" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="filter1">Pending</SelectItem>
+                            <SelectItem value="filter2">Completed</SelectItem>
+                            <SelectItem value="filter3">Cancelled</SelectItem>
+                            <SelectItem value="filter4">Returned</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            <OrderStatistics />
             <form className="w-full items-center justify-center flex relative mt-3 lg:mt-0">
                 <input
                     type="text"
