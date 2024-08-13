@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from "next/image";
+import { Heading } from '@/components/heading';
+import { SubHeading } from '@/components/subHeading';
+import Link from "next/link";
 
 interface Product {
     id: number;
@@ -85,7 +88,20 @@ const InventoryTable = () => {
     );
 
     return (
-        <div className="pt-5">
+        <div>
+            <div className='flex justify-between items-center mb-4'>
+                <div>
+                    <Heading>Inventory</Heading>
+                    <SubHeading className='flex items-center gap-1 mt-3'>
+                        Category
+                        <Icon icon="icon-park-outline:double-right" className="text-sm text-gray-500" />
+                        Inventory
+                    </SubHeading>
+                </div>
+                <div>
+                    <Button className='rounded-none bg-[#3B9BCE] w-28 text-xs md:text-base md:w-full'><Link href="/dashboard/add-product">Add New Product</Link></Button>
+                </div>
+            </div>
             <div className="flex flex-col md:flex-row justify-between items-center my-4 md:mt-0">
                 <h2 className="text-xl font-semibold">Main warehouse</h2>
                 <div className="flex gap-2 items-center">

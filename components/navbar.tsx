@@ -88,7 +88,7 @@ const NavbarIcons: React.FC = () => {
           <DropdownMenuItem asChild>
             <Link href="/admin/edit-price">Edit Price</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild>a
             <Link href="/admin/edit-vendor">Edit Vendor</Link>
           </DropdownMenuItem>
         </DropdownMenuContent>

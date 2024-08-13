@@ -50,6 +50,7 @@ const OrderTable = () => {
     const ordersPerPage = 10;
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedFilter, setSelectedFilter] = useState<string | undefined>(undefined);
     const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
 
     useEffect(() => {
@@ -137,17 +138,26 @@ const OrderTable = () => {
         return () => clearTimeout(timer);
     }, []);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedFilter]);
+
     const { filteredOrders, displayedOrders, totalPages } = useMemo(() => {
-        const filtered: Order[] = orders.filter(order =>
+        let filtered: Order[] = orders.filter(order =>
             order.customer.toLowerCase().includes(searchTerm.toLowerCase())
         );
+    
+        if (selectedFilter && selectedFilter !== 'all') {
+            filtered = filtered.filter(order => order.status === selectedFilter);
+        }
+    
         const displayed: Order[] = filtered.slice(
             (currentPage - 1) * ordersPerPage,
             currentPage * ordersPerPage
         );
         const total = Math.ceil(filtered.length / ordersPerPage);
         return { filteredOrders: filtered, displayedOrders: displayed, totalPages: total };
-    }, [orders, searchTerm, currentPage, ordersPerPage]);
+    }, [orders, searchTerm, currentPage, ordersPerPage, selectedFilter]);
 
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(event.target.value);
@@ -201,15 +211,16 @@ const OrderTable = () => {
                     </SubHeading>
                 </div>
                 <div>
-                    <Select>
+                    <Select onValueChange={(value) => setSelectedFilter(value)}>
                         <SelectTrigger className='bg-[#3B9BCE] text-white rounded-none gap-2'>
                             <SelectValue placeholder="Filter" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="filter1">Pending</SelectItem>
-                            <SelectItem value="filter2">Completed</SelectItem>
-                            <SelectItem value="filter3">Cancelled</SelectItem>
-                            <SelectItem value="filter4">Returned</SelectItem>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Completed">Completed</SelectItem>
+                            <SelectItem value="Shipped">Shipped</SelectItem>
+                            <SelectItem value="Cancelled">Cancelled</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
