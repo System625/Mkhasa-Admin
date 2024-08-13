@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 const TopSellingProductsTable = () => {
     const products = [
@@ -52,7 +53,13 @@ const TopSellingProductsTable = () => {
                                 <td className="py-3 px-4 border-b text-xs md:text-sm lg:text-base">{index + 1}</td>
                                 <td className="py-3 px-4 border-b text-xs md:text-sm lg:text-base">{product.category}</td>
                                 <td className="py-3 px-4 border-b flex items-center space-x-3">
-                                    <img src={product.imageUrl} alt={product.name} className="w-8 h-8 rounded-full object-cover" />
+                                    <Image
+                                        src={product.imageUrl}
+                                        alt={product.name}
+                                        className="rounded-full object-cover"
+                                        width={38}
+                                        height={38}
+                                    />
                                     <span className='text-xs md:text-sm lg:text-base'>{product.name}</span>
                                 </td>
                                 <td className={`py-3 px-4 border-b text-xs md:text-sm lg:text-base ${product.stockStatus === 'in-stock' ? 'text-green-500' : 'text-red-500'}`}>

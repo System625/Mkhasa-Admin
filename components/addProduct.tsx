@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heading } from '@/components/heading';
+import Image from 'next/image';
 
 export const AddProduct = () => {
     const [images, setImages] = useState<(File | null)[]>(Array(4).fill(null));
@@ -24,7 +25,7 @@ export const AddProduct = () => {
     const renderImageSlot = (index: number) => {
         if (images[index]) {
             return (
-                <img
+                <Image
                     src={URL.createObjectURL(images[index] as File)}
                     alt={`Product ${index + 1}`}
                     className="w-full h-full object-cover"

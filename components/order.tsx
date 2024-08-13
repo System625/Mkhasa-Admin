@@ -23,6 +23,7 @@ import OrderStatistics from '@/components/orderStat';
 import { Heading } from '@/components/heading';
 import { SubHeading } from './subHeading';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
 
 interface Order {
     id: number;
@@ -248,10 +249,12 @@ const OrderTable = () => {
                         <TableRow key={order.id} className='bg-gray-100'>
                             <TableCell className='pr-10 lg:pr-0'>
                                 <div className="flex items-center">
-                                    <img
+                                    <Image
                                         src={order.productImage}
                                         alt={order.productName}
-                                        className="w-10 h-10 mr-2"
+                                        className="mr-2"
+                                        width={40}
+                                        height={40}
                                     />
                                     <div>
                                         <div className='text-xs line-clamp-1 lg:text-base'>{order.productName}</div>

@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 const withAuth = (WrappedComponent: React.ComponentType) => {
-  return (props: any) => {
+  const WithAuth = (props: any) => {
     const { data: session, status } = useSession()
     const router = useRouter()
 
@@ -19,6 +19,13 @@ const withAuth = (WrappedComponent: React.ComponentType) => {
 
     return null
   }
+
+  WithAuth.displayName = `WithAuth(${getDisplayName(WrappedComponent)})`
+  return WithAuth
+}
+
+function getDisplayName(WrappedComponent: React.ComponentType) {
+  return WrappedComponent.displayName || WrappedComponent.name || 'Component'
 }
 
 export default withAuth

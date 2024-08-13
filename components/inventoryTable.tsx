@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Image from "next/image";
 
 interface Product {
     id: number;
@@ -106,10 +107,12 @@ const InventoryTable = () => {
                         <TableRow key={product.id}>
                             <TableCell>
                                 <div className="flex items-center pr-6">
-                                    <img
+                                    <Image
                                         src={product.imageUrl}
                                         alt={product.name}
-                                        className="w-10 h-10 mr-2"
+                                        className="mr-2"
+                                        width={40}
+                                        height={40}
                                     />
                                     <div>
                                         <p className="text-sm line-clamp-1 md:text-base">{product.name}</p>
