@@ -1,30 +1,23 @@
-// components/withAuth.tsx
-"use client"
-
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 const withAuth = (WrappedComponent: React.ComponentType) => {
-  return function WithAuth(props: any) {
+  return (props: any) => {
     const { data: session, status } = useSession()
     const router = useRouter()
 
     useEffect(() => {
-      if (status === 'unauthenticated') {
-        router.push('/login')
+      if (status === "unauthenticated") {
+        router.replace("/login")
       }
     }, [status, router])
 
-    if (status === 'loading') {
-      return <div>Loading...</div>
+    if (status === "authenticated") {
+      return <WrappedComponent {...props} />
     }
 
-    if (!session) {
-      return null
-    }
-
-    return <WrappedComponent {...props} />
+    return null
   }
 }
 

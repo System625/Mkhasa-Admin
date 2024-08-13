@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heading } from '@/components/heading';
-import { SubHeading } from './subHeading';
 
 export const AddProduct = () => {
     const [images, setImages] = useState<(File | null)[]>(Array(4).fill(null));

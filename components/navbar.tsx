@@ -77,7 +77,7 @@ const NavbarIcons: React.FC = () => {
     <div className="flex gap-5 lg:gap-10 justify-between items-center">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="relative top-1">
+          <button>
             <Icon icon="jam:write" style={{ fontSize: 24 }} />
           </button>
         </DropdownMenuTrigger>
@@ -96,7 +96,7 @@ const NavbarIcons: React.FC = () => {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="relative top-1">
+          <button>
             <Icon icon="mdi:plus" className="rounded-full bg-app-ash" style={{ fontSize: 24 }} />
           </button>
         </DropdownMenuTrigger>

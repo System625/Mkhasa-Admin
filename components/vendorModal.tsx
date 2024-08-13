@@ -102,7 +102,7 @@ export const VendorModal: React.FC<VendorModalProps> = ({ isOpen, onClose }) => 
             <Input type="text" value={postCode} onChange={(e) => setPostCode(e.target.value)} className='bg-white border-gray-200 rounded-md' />
           </div>
 
-          <h3 className="text-lg font-semibold mt-4">Guarantor’s Details</h3>
+          <h3 className="text-lg font-semibold mt-4">Guarantor&apos;s Details</h3>
 
           <div className='flex flex-col gap-2'>
             <Label className="block text-sm font-medium text-gray-700">Name</Label>

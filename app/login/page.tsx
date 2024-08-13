@@ -15,21 +15,18 @@ const LoginPage = () => {
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault()
         const result = await signIn('credentials', {
             redirect: false,
             email,
             password,
-        });
+        })
 
         if (result?.error) {
-            // Set error message on failure
-            setError('Incorrect email or password. Please try again.');
+            setError('Incorrect email or password. Please try again.')
         } else {
-            // Clear error message on success
-            setError('');
-            // Redirect to dashboard on success
-            router.push('/dashboard');
+            setError('')
+            router.push('/dashboard')
         }
     };
 

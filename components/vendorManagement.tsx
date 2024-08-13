@@ -160,7 +160,7 @@ const VendorManagement = () => {
     };
 
     return (
-        <div className="p-4">
+        <div>
             <div className="flex justify-between items-center mb-4">
                 <Heading>Vendors</Heading>
                 <Button

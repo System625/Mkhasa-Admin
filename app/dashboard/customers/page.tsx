@@ -3,6 +3,7 @@ import { Wrapper } from '@/components/wrapper';
 import { Heading } from '@/components/heading';
 import { SubHeading } from '@/components/subHeading';
 import { Icon } from "@iconify/react";
+import CustomerManagement from '@/components/customerManagement';
 
 const CustomersPage = () => {
     return (
@@ -13,6 +14,7 @@ const CustomersPage = () => {
                 <Icon icon="icon-park-outline:double-right" className="text-sm text-gray-500" />
                 Customers
             </SubHeading>
+            <CustomerManagement/>
         </Wrapper>
     );
 };

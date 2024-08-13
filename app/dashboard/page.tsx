@@ -4,10 +4,12 @@ import React, { useEffect, useState } from "react";
 import { Wrapper } from "@/components/wrapper";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import Sidebar from "@/components/sidebar";
 import DashboardMetric from "@/components/dashboardMetric";
 import EarningsChart from "@/components/earningChart";
 import TopSellingProductsTable from "@/components/topSellingTable";
+import withAuth from "@/components/withAuth";
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-screen">
@@ -19,21 +21,42 @@ const Dashboard: React.FC = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate loading delay
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500); // Adjust this value as needed
-
-    return () => clearTimeout(timer);
-  }, []);
+  const [pendingOrderCount, setPendingOrderCount] = useState(0);
+  const [dispatchedOrderCount, setDispatchedOrderCount] = useState(0);
+  const [deliveredOrderCount, setDeliveredOrderCount] = useState(0);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
+    } else if (status === "authenticated") {
+      if (session?.user?._id) {
+        fetchDashboardData(session.user._id);
+      } else {
+        console.error("Session user ID is undefined");
+        setIsLoading(false); // Ensure loading state is turned off
+      }
     }
-  }, [status, router]);
+  }, [status, router, session]);
+
+  const fetchDashboardData = async (adminId: string) => {
+    setIsLoading(true);
+    try {
+      const [pendingResponse, dispatchedResponse, deliveredResponse] = await Promise.all([
+        axios.get(`/api/proxy?path=count/pending/order&adminId=${adminId}`),
+        axios.get(`/api/proxy?path=count/dispatched/order&adminId=${adminId}`),
+        axios.get(`/api/proxy?path=count/delivered/order&adminId=${adminId}`)
+      ]);     
+
+      setPendingOrderCount(Number(pendingResponse.data));
+      setDispatchedOrderCount(Number(dispatchedResponse.data));
+      setDeliveredOrderCount(Number(deliveredResponse.data));
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading || status === "loading") {
     return <LoadingSpinner />;
@@ -49,10 +72,10 @@ const Dashboard: React.FC = () => {
         <Sidebar />
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-            <DashboardMetric title="Pending Order" count={25} icon="material-symbols:pending" color="#F24E1E" />
-            <DashboardMetric title="Dispatched" count={20} icon="solar:delivery-bold" color="#4ECB71" />
+            <DashboardMetric title="Pending Orders" count={pendingOrderCount} icon="material-symbols:pending" color="#F24E1E" />
+            <DashboardMetric title="Dispatched Orders" count={dispatchedOrderCount} icon="solar:delivery-bold" color="#4ECB71" />
             <DashboardMetric title="Low Inventory Orders" count={15} icon="material-symbols:inventory" color="#4E7CCB" />
-            <DashboardMetric title="Delivered Orders" count={32} icon="hugeicons:package-delivered" color="#4ECB71" />
+            <DashboardMetric title="Delivered Orders" count={deliveredOrderCount} icon="hugeicons:package-delivered" color="#4ECB71" />
           </div>
         </div>
       </div>
@@ -64,4 +87,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default withAuth(Dashboard);
