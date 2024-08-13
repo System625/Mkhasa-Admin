@@ -1,8 +1,22 @@
-import NextAuth from "next-auth"
+import NextAuth, { NextAuthOptions, DefaultSession, DefaultUser } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import axios from 'axios'
 
-export const authOptions = {
+// Extend the built-in session types
+interface ExtendedSession extends DefaultSession {
+  accessToken?: string;
+  user?: DefaultSession["user"] & {
+    _id: string;
+  };
+}
+
+// Extend the built-in user types
+interface ExtendedUser extends DefaultUser {
+  token?: string;
+  _id: string;
+}
+
+const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -19,11 +33,11 @@ export const authOptions = {
             })
             
             if (res.data) {
-              // Assuming the response includes the user data with _id
+              // Cast the return value to ExtendedUser
               return {
                 ...res.data.doesUserEmailExist,
                 token: res.data.token
-              }
+              } as ExtendedUser
             } else {
               return null
             }
@@ -38,19 +52,22 @@ export const authOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }: { token: any, user?: any }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.accessToken = user.token
-        token._id = user._id // Add the _id to the token
+        token.accessToken = (user as ExtendedUser).token
+        token._id = (user as ExtendedUser)._id
       }
       return token
     },
-    async session({ session, token }: { session: any, token: any }) {
-      session.accessToken = token.accessToken
-      if (session.user) {
-        session.user._id = token._id // Add the _id to the session user
+    async session({ session, token }): Promise<ExtendedSession> {
+      return {
+        ...session,
+        accessToken: token.accessToken as string,
+        user: {
+          ...session.user,
+          _id: token._id as string
+        }
       }
-      return session
     }
   },
   pages: {

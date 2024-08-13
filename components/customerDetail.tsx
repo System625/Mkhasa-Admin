@@ -27,7 +27,13 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                 {/* Left side: Customer Info */}
                 <div className="lg:w-1/4 mb-6 md:mb-0 bg-gray-50">
                     <div className="flex flex-col items-center justify-center pt-4 pb-10 gap-3 mb-6">
-                        <Image src={customer.avatarUrl || '/default-avatar.png'} alt={customer.name} className="w-24 h-24 rounded-full" />
+                        <Image 
+                        src={customer.avatarUrl || '/default-avatar.png'} 
+                        alt={customer.name} 
+                        className="h-[100px] rounded-full"
+                        width={100}
+                        height={10}    
+                        />
                         <h2 className="text-xl font-semibold">{customer.name}</h2>
                         <div className='w-full mt-3'>
                             <hr />
