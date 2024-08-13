@@ -1,10 +1,11 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import type { Session } from "next-auth";
 
 const withAuth = (WrappedComponent: React.ComponentType) => {
   const WithAuth = (props: any) => {
-    const { data: session, status } = useSession()
+    const { data: session, status } = useSession() as { data: Session | null, status: string };
     const router = useRouter()
 
     useEffect(() => {
