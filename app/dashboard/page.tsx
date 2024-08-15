@@ -24,6 +24,7 @@ const Dashboard: React.FC = () => {
   const [pendingOrderCount, setPendingOrderCount] = useState(0);
   const [dispatchedOrderCount, setDispatchedOrderCount] = useState(0);
   const [deliveredOrderCount, setDeliveredOrderCount] = useState(0);
+  const [inventoryOrderCount, setInventoryOrderCount] = useState(0);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -41,15 +42,17 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async (adminId: string) => {
     setIsLoading(true);
     try {
-      const [pendingResponse, dispatchedResponse, deliveredResponse] = await Promise.all([
+      const [pendingResponse, dispatchedResponse, deliveredResponse, inventoryResponse] = await Promise.all([
         axios.get(`/api/proxy?path=count/pending/order&adminId=${adminId}`),
         axios.get(`/api/proxy?path=count/dispatched/order&adminId=${adminId}`),
-        axios.get(`/api/proxy?path=count/delivered/order&adminId=${adminId}`)
+        axios.get(`/api/proxy?path=count/delivered/order&adminId=${adminId}`),
+        axios.get(`/api/proxy?path=low/quantity&adminId=${adminId}`),
       ]);     
 
       setPendingOrderCount(Number(pendingResponse.data));
       setDispatchedOrderCount(Number(dispatchedResponse.data));
       setDeliveredOrderCount(Number(deliveredResponse.data));
+      setInventoryOrderCount(Number(inventoryResponse.data.lowQuantityCount));
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -74,7 +77,7 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
             <DashboardMetric title="Pending Orders" count={pendingOrderCount} icon="material-symbols:pending" color="#F24E1E" />
             <DashboardMetric title="Dispatched Orders" count={dispatchedOrderCount} icon="solar:delivery-bold" color="#4ECB71" />
-            <DashboardMetric title="Low Inventory Orders" count={15} icon="material-symbols:inventory" color="#4E7CCB" />
+            <DashboardMetric title="Low Inventory Orders" count={inventoryOrderCount} icon="material-symbols:inventory" color="#4E7CCB" />
             <DashboardMetric title="Delivered Orders" count={deliveredOrderCount} icon="hugeicons:package-delivered" color="#4ECB71" />
           </div>
         </div>

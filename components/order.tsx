@@ -23,19 +23,27 @@ import OrderStatistics from '@/components/orderStat';
 import { Heading } from '@/components/heading';
 import { SubHeading } from './subHeading';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Image from 'next/image';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+// import Image from 'next/image';
 
 interface Order {
-    id: number;
-    orderNumber: string;
-    productImage: string;
-    productName: string;
-    customer: string;
-    date: string;
-    total: string;
+    _id: string;
+    code: string;
+    name: string;
+    email: string;
+    date?: string; // We'll need to generate this
+    total: number;
     status: string;
-    item: number;
-    delivery: string;
+    items: Array<{
+        _id: string;
+        name: string;
+        quantity: number;
+        price: number;
+    }>;
+    payment: boolean;
+    item: number; // Total number of items
+    delivery: string; // Always "Free Shipping"
 }
 
 const LoadingSpinner = () => (
@@ -53,90 +61,71 @@ const OrderTable = () => {
     const [selectedFilter, setSelectedFilter] = useState<string | undefined>(undefined);
     const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
 
+    const { data: session, status } = useSession();
+    const router = useRouter();
+
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const productImages = {
-        'Nivea Roll On': '/images/roll-on.png',
-        'Nivea Body Spray': '/images/body-spray.png',
-        'Marina Perfume': '/images/marina.png'
-    };
-
-    type ProductName = keyof typeof productImages;
-
-    const generateRandomOrders = (numOrders: number): Order[] => {
-        const customers = [
-            'Adewale Michael',
-            'Aisha Abubakar',
-            'Samson James',
-            'Taskane Marina',
-            'Chukwuemeka Eze',
-            'Oluchi Adesina',
-            'Fatima Usman',
-            'John Doe',
-            'Jane Smith',
-            'Michael Johnson',
-        ];
-
-        const statuses = ['Pending', 'Completed', 'Shipped', 'Cancelled'];
-
-        const products = Object.keys(productImages) as ProductName[];
-
-        const generateRandomDate = () => {
-            const start = new Date(2023, 0, 1);
-            const end = new Date(2024, 7, 1);
-            const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-            return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-        };
-
-        const generateRandomCurrency = (min: number, max: number) => {
-            return `₦${Math.floor(Math.random() * (max - min + 1) + min).toLocaleString()}`;
-        };
-
-        const orders = [];
-        for (let i = 3; i <= numOrders + 2; i++) {
-            const randomCustomer = customers[Math.floor(Math.random() * customers.length)];
-            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-            const randomProduct = products[Math.floor(Math.random() * products.length)];
-            const randomItemCount = Math.floor(Math.random() * 10) + 1;
-            const randomOrderNumber = Math.floor(Math.random() * 1000000);
-
-            orders.push({
-                id: i,
-                orderNumber: `#${randomOrderNumber}`,
-                productImage: productImages[randomProduct],
-                productName: randomProduct,
-                customer: randomCustomer,
-                date: generateRandomDate(),
-                total: generateRandomCurrency(1000, 20000),
-                status: randomStatus,
-                item: randomItemCount,
-                delivery: 'Free Shipping',
-            });
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            router.push("/login");
+        } else if (status === "authenticated") {
+            if (session?.user?._id) {
+                fetchOrders(session.user._id);
+            } else {
+                console.error("Session user ID is undefined");
+                setIsLoading(false);
+            }
         }
-        return orders;
-    };
+    }, [status, router, session]);
 
-    useEffect(() => {
-        const initialOrders: Order[] = [
-            { id: 1, orderNumber: '#657892', productImage: productImages['Marina Perfume'], productName: 'Taskane Marina', customer: 'Adewale Michael', date: '25-08-2024', total: '₦15,000', status: 'Pending', item: 1, delivery: 'Free Shipping' },
-            { id: 2, orderNumber: '#657893', productImage: productImages['Nivea Roll On'], productName: 'Nivea Roll On', customer: 'Aisha Abubakar', date: '25-08-2024', total: '₦2,000', status: 'Completed', item: 8, delivery: 'Free Shipping' },
-        ];
-        const generatedOrders = generateRandomOrders(98);
-        setOrders([...initialOrders, ...generatedOrders]);
-    }, []);
+    const fetchOrders = async (adminId: string) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/proxy?path=all/order/system&adminId=${adminId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch orders');
+            }
+            const data = await response.json();
+            
+            console.log('API Response:', data); // Debug: Log the entire response
 
-    useEffect(() => {
-        // Simulate loading delay
-        const timer = setTimeout(() => {
+            // Check if data is an array
+            if (!Array.isArray(data)) {
+                console.error('Expected an array of orders, but received:', typeof data);
+                setOrders([]);
+                return;
+            }
+
+            // Transform the data to match our Order interface
+            const transformedOrders = data.map((order: any) => ({
+                _id: order._id,
+                code: order.code,
+                name: order.name,
+                email: order.email,
+                date: new Date(order.date).toLocaleDateString(),
+                total: order.total,
+                status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+                items: order.items,
+                payment: order.payment,
+                item: order.items.reduce((sum: number, item: any) => sum + item.quantity, 0),
+                delivery: order.total > 100000 ? 'Free Shipping' : 'Paid Shipping'
+            }));
+            
+            console.log('Transformed Orders:', transformedOrders); // Debug: Log the transformed orders
+            
+            setOrders(transformedOrders);
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            // Handle error (e.g., show error message to user)
+        } finally {
             setIsLoading(false);
-        }, 500); // Adjust this value as needed
-
-        return () => clearTimeout(timer);
-    }, []);
+        }
+    };
 
     useEffect(() => {
         setCurrentPage(1);
@@ -144,13 +133,13 @@ const OrderTable = () => {
 
     const { filteredOrders, displayedOrders, totalPages } = useMemo(() => {
         let filtered: Order[] = orders.filter(order =>
-            order.customer.toLowerCase().includes(searchTerm.toLowerCase())
+            order.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
-    
+
         if (selectedFilter && selectedFilter !== 'all') {
             filtered = filtered.filter(order => order.status === selectedFilter);
         }
-    
+
         const displayed: Order[] = filtered.slice(
             (currentPage - 1) * ordersPerPage,
             currentPage * ordersPerPage
@@ -195,8 +184,13 @@ const OrderTable = () => {
         return pages;
     };
 
-    if (isLoading) {
+    if (isLoading || status === "loading") {
         return <LoadingSpinner />;
+    }
+    
+    if (status === "unauthenticated") {
+        router.push("/login");
+        return null;
     }
 
     return (
@@ -257,25 +251,25 @@ const OrderTable = () => {
                 </TableHeader>
                 <TableBody>
                     {displayedOrders.map((order) => (
-                        <TableRow key={order.id} className='bg-gray-100'>
+                        <TableRow key={order._id} className='bg-gray-100'>
                             <TableCell className='pr-10 lg:pr-0'>
                                 <div className="flex items-center">
-                                    <Image
+                                    {/* <Image
                                         src={order.productImage}
                                         alt={order.productName}
                                         className="mr-2"
                                         width={40}
                                         height={40}
-                                    />
+                                    /> */}
                                     <div>
-                                        <div className='text-xs line-clamp-1 lg:text-base'>{order.productName}</div>
-                                        <div className="text-xs lg:text-sm text-gray-500">{order.orderNumber}</div>
+                                        <div className='text-xs line-clamp-1 lg:text-base'>{order.items[0].name}</div>
+                                        <div className="text-xs lg:text-sm text-gray-500">{order.code}</div>
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell className='text-xs lg:text-base'>{order.customer}</TableCell>
+                            <TableCell className='text-xs lg:text-base'>{order.name}</TableCell>
                             <TableCell className='text-xs lg:text-base'>{order.date}</TableCell>
-                            <TableCell className='text-xs lg:text-base'>{order.total}</TableCell>
+                            <TableCell className='text-xs lg:text-base'>₦{order.total.toLocaleString()}</TableCell>
                             <TableCell className='text-xs lg:text-base'>{order.status}</TableCell>
                             <TableCell className='text-xs lg:text-base'>{order.item}</TableCell>
                             <TableCell className='text-xs lg:text-base'>{order.delivery}</TableCell>
