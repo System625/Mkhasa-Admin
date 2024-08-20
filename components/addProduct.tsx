@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from './ui/label';
 import { Button } from '@/components/ui/button';
@@ -8,50 +8,188 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heading } from '@/components/heading';
-import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { toast } from 'react-hot-toast';
+
+type FormData = {
+    name: string;
+    description: string;
+    price: string;
+    type: string;
+    brand: string;
+    topNotes: string;
+    middleNotes: string;
+    baseNotes: string;
+    volume: string;
+    mainImage: File | string | null;
+    firstImage: File | string | null;
+    secondImage: File | string | null;
+    thirdImage: File | string | null;
+    category: string;
+    serialBarcode: string;
+    barcode: string;
+    sku: string;
+    quantity: string;
+    discountPercentage: string;
+    appeal: string;
+    manufacturer: string;
+    serialName: string;
+    addSeries: boolean;
+    thumbnailDescription: string;
+};
 
 export const AddProduct = () => {
-    const [images, setImages] = useState<(File | null)[]>(Array(4).fill(null));
+    const initialFormData: FormData = {
+        name: '',
+        description: '',
+        price: '',
+        type: '',
+        brand: '',
+        topNotes: '',
+        middleNotes: '',
+        baseNotes: '',
+        volume: '',
+        mainImage: null,
+        firstImage: null,
+        secondImage: null,
+        thirdImage: null,
+        category: '',
+        serialBarcode: '',
+        barcode: '',
+        sku: '',
+        quantity: '',
+        discountPercentage: '',
+        appeal: '',
+        manufacturer: '',
+        serialName: '',
+        addSeries: false,
+        thumbnailDescription: '',
+    };
+    const [formData, setFormData] = useState<FormData>(initialFormData);
+    const [errors, setErrors] = useState<Partial<FormData>>({});
+    const { data: session, status } = useSession();
+    const formRef = useRef<HTMLFormElement>(null);
+
+    const handleDiscardChanges = () => {
+        setFormData(initialFormData);
+        // Also clear any error states if you have them
+        setErrors({});
+    };
+
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+        }));
+        if (errors[name as keyof FormData]) {
+            setErrors(prevErrors => ({ ...prevErrors, [name]: undefined }));
+        }
+    };
 
     const handleImageUpload = (event: ChangeEvent<HTMLInputElement>, index: number) => {
         const file = event.target.files?.[0];
-        if (file) {
-            const newImages = [...images];
-            newImages[index] = file;
-            setImages(newImages);
+        const imageFields = ['mainImage', 'firstImage', 'secondImage', 'thirdImage'];
+    
+        if (file && index >= 0 && index < imageFields.length) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setFormData(prev => ({
+                    ...prev,
+                    [imageFields[index]]: e.target?.result as string,
+                }));
+            };
+            reader.readAsDataURL(file);
         }
     };
 
-    const renderImageSlot = (index: number) => {
-        if (images[index]) {
-            return (
-                <Image
-                    src={URL.createObjectURL(images[index] as File)}
-                    alt={`Product ${index + 1}`}
-                    className="w-full h-full object-cover"
-                />
-            );
-        }
-        return (
-            <label className="w-full h-full flex items-center justify-center cursor-pointer">
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, index)}
-                    className="hidden"
-                />
-                <span className="text-blue-500">+</span>
-            </label>
-        );
+    const validateForm = (): boolean => {
+        const newErrors: Partial<FormData> = {};
+
+        if (!formData.name) newErrors.name = "Name is required";
+        if (!formData.description) newErrors.description = "Description is required";
+        if (!formData.price || isNaN(Number(formData.price))) newErrors.price = "Valid price is required";        
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+
+        if (!validateForm()) {
+            toast.error("Please correct the errors in the form");
+            return;
+        }
+
+        if (status !== "authenticated" || !session?.user?._id) {
+            console.error("User is not authenticated or user ID is missing");
+            toast.error("Authentication error");
+            return;
+        }
+
+        const adminId = session.user._id;
+
+        // Convert form data to match API expectations
+        const productData = {
+            ...formData,
+            price: Number(formData.price),
+            quantity: Number(formData.quantity),
+            discountPercentage: Number(formData.discountPercentage),
+            // Add any other necessary conversions here
+        };
+
+        try {
+            // Upload images first (pseudo-code, implement according to your image upload solution)
+            const imageUrls = await Promise.all(
+                ['mainImage', 'firstImage', 'secondImage', 'thirdImage'].map(async (field) => {
+                    if (formData[field as keyof FormData]) {
+                        // return await uploadImage(formData[field as keyof FormData] as File);
+                        return "URL_PLACEHOLDER"; // Replace with actual upload logic
+                    }
+                    return null;
+                })
+            );
+
+            // Add image URLs to productData
+            productData.mainImage = imageUrls[0] || "";
+            productData.firstImage = imageUrls[1] || "";
+            productData.secondImage = imageUrls[2] || "";
+            productData.thirdImage = imageUrls[3] || "";
+
+            const response = await fetch(`/api/proxy?path=add/product&adminId=${adminId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(productData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add product');
+            }
+
+            const result = await response.json();
+            console.log(result);
+            toast.success("Product added successfully");
+        } catch (error) {
+            console.error('Error adding product:', error);
+            toast.error("Failed to add product");
+        }
+    };
+
+    const triggerSubmit = () => {
+        formRef.current?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    };
+
 
     return (
         <>
             <div className="flex flex-col md:flex-row gap-5 md:gap-0 justify-between items-center mb-4">
                 <Heading>Add Product</Heading>
                 <div className='flex justify-evenly gap-4'>
-                    <Button className='rounded-none w-40 border border-app-red text-app-red bg-white text-xs md:text-base'>Discard Changes</Button>
-                    <Button className='rounded-none w-40 bg-[#3B9BCE] text-xs md:text-base'>Add Product</Button>
+                    <Button onClick={handleDiscardChanges} className='rounded-none w-40 border border-app-red text-app-red bg-white text-xs md:text-base'>Discard Changes</Button>
+                    <Button type="submit" onClick={triggerSubmit} className='rounded-none w-40 bg-[#3B9BCE] text-xs md:text-base'>Add Product</Button>
                 </div>
             </div>
             <div className="py-4 md:py-8 grid gap-10 lg:grid-cols-12">
@@ -60,18 +198,34 @@ export const AddProduct = () => {
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">General Information</h2>
-                            <form className="grid gap-5">
+                            <form ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Product Name</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        type="text"
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Description</Label>
-                                    <Textarea className='h-32' />
+                                    <Textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleChange}
+                                        className='h-32'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
                                 </div>
                                 <div>
-                                    <Select>
-                                        <SelectTrigger className='bg-transparent rounded-sm'>
+                                    <Select
+                                        value={formData.category}
+                                        onValueChange={(value) => handleChange({ target: { name: 'category', value } } as any)}
+                                    >
+                                        <SelectTrigger className="bg-transparent rounded-sm">
                                             <SelectValue placeholder="Add Series" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -82,21 +236,50 @@ export const AddProduct = () => {
                                     </Select>
                                 </div>
                                 <div className='flex flex-col gap-2'>
-                                    <Label className="block text-sm font-medium text-gray-700">Name</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Label className="block text-sm font-medium text-gray-700">Serial Name</Label>
+                                    <Input
+                                        type="text"
+                                        name="serialName"
+                                        value={formData.serialName}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.serialName}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Serial bar code</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="serialBarcode"
+                                        value={formData.serialBarcode}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.serialBarcode}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
-                                    <Label className="block text-sm font-medium text-gray-700">Base Price</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Label className="block text-sm font-medium text-gray-700">Brand</Label>
+                                    <Input
+                                        type="text"
+                                        name="brand"
+                                        value={formData.brand}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.brand}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
-                                    <Label className="block text-sm font-medium text-gray-700">Discount Percentage (%)</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Label className="block text-sm font-medium text-gray-700">Manufacturer</Label>
+                                    <Input
+                                        type="text"
+                                        name="manufacturer"
+                                        value={formData.manufacturer}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.manufacturer}</p>}
                                 </div>
+                                {/* Add other fields as needed */}
                             </form>
                         </CardContent>
                     </Card>
@@ -104,14 +287,28 @@ export const AddProduct = () => {
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">Pricing</h2>
-                            <form className="grid gap-5">
+                            <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Base Price</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="price"
+                                        value={formData.price}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Discount Percentage (%)</Label>
-                                    <Input type="text" className='bg-white border-gray-200 w-1/2' />
+                                    <Input
+                                        type="text"
+                                        name="discountPercentage"
+                                        value={formData.discountPercentage}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200 w-1/2'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.discountPercentage}</p>}
                                 </div>
                             </form>
                         </CardContent>
@@ -120,38 +317,79 @@ export const AddProduct = () => {
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">Inventory</h2>
-                            <form className="grid grid-cols-3 gap-5">
+                            <form className="grid grid-cols-3 gap-5" ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">SKU</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="sku"
+                                        value={formData.sku}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.sku}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Barcode</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="barcode"
+                                        value={formData.barcode}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.barcode}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Quantity</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="quantity"
+                                        value={formData.quantity}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>}
                                 </div>
                             </form>
                         </CardContent>
                     </Card>
-
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">Notes</h2>
-                            <form className="grid gap-5">
+                            <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Top Notes</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="topNotes"
+                                        value={formData.topNotes}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.topNotes}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Middle Notes</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="middleNotes"
+                                        value={formData.middleNotes}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.middleNotes}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Base Notes</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="baseNotes"
+                                        value={formData.baseNotes}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.baseNotes}</p>}
                                 </div>
                             </form>
                         </CardContent>
@@ -160,22 +398,44 @@ export const AddProduct = () => {
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">Other</h2>
-                            <form className="grid gap-5">
+                            <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Appeal</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="appeal"
+                                        value={formData.appeal}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.appeal}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Type</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="type"
+                                        value={formData.type}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Volume</Label>
-                                    <Input type="text" className='bg-white border-gray-200' />
+                                    <Input
+                                        type="text"
+                                        name="volume"
+                                        value={formData.volume}
+                                        onChange={handleChange}
+                                        className='bg-white border-gray-200'
+                                    />
+                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.volume}</p>}
                                 </div>
                             </form>
                         </CardContent>
                     </Card>
+                    {/* Add more cards for other sections */}
                 </div>
 
                 {/* Right Section: Product Media and Category */}
@@ -184,38 +444,40 @@ export const AddProduct = () => {
                         <CardContent>
                             <h2 className="text-xl font-semibold mb-4">Product Media</h2>
                             <p className="text-gray-500 mb-4">Photo Product</p>
-                            <div className="border-2 border-dashed border-gray-300 p-4 rounded-lg bg-white">
+                            <div className="border-2 border-dashed border-gray-400 p-4 bg-white">
                                 <div className="grid grid-cols-2 gap-4 mb-4">
-                                    {images.map((_, index) => (
-                                        <div key={index} className="aspect-square border border-gray-300">
-                                            {renderImageSlot(index)}
+                                    {(['mainImage', 'firstImage', 'secondImage', 'thirdImage'] as Array<keyof FormData>).map((field, index) => (
+                                        <div key={field} className="relative aspect-square border border-gray-300 bg-gray-50">
+                                            <input
+                                                type="file"
+                                                onChange={(e) => handleImageUpload(e, index)}
+                                                accept="image/*"
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                            />
+                                            {formData[field] && (
+                                                <img
+                                                    src={formData[field] as string} // Type assertion to string
+                                                    alt="Uploaded preview"
+                                                    className="absolute inset-0 object-cover w-full h-full"
+                                                />
+                                            )}
                                         </div>
                                     ))}
                                 </div>
-                                <div className="relative">
-                                    <Button
-                                        variant="outline"
-                                        className="w-full"
-                                        style={{ color: '#3B9BCE', borderColor: '#33B9BCE' }}
-                                    >
-                                        Add More Images
-                                    </Button>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                            handleImageUpload(e, images.findIndex(img => img === null))
-                                        }
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    />
-                                </div>
+                                <button
+                                    type="button"
+                                    className="w-full py-2 text-blue-500 border font-semibold border-blue-500 rounded-lg hover:bg-blue-50"
+                                >
+                                    Add More Images
+                                </button>
                             </div>
                         </CardContent>
                     </Card>
+
                     <Card className='py-4 border-none bg-gray-50'>
                         <CardContent>
                             <h2 className="text-xl font-semibold mb-4">Category</h2>
-                            <Select>
+                            <Select onValueChange={(value) => setFormData({ ...formData, category: value })}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
@@ -227,6 +489,7 @@ export const AddProduct = () => {
                                     <SelectItem value="reed-diffuser">Reed Diffuser</SelectItem>
                                 </SelectContent>
                             </Select>
+
                         </CardContent>
                     </Card>
                 </div>
