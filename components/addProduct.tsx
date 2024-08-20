@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, ChangeEvent, useRef } from 'react';
+import React, { useState, useEffect, ChangeEvent, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from './ui/label';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,11 @@ type FormData = {
     thumbnailDescription: string;
 };
 
+type Category = {
+    _id: string;
+    name: string;
+};
+
 export const AddProduct = () => {
     const initialFormData: FormData = {
         name: '',
@@ -67,6 +72,7 @@ export const AddProduct = () => {
     };
     const [formData, setFormData] = useState<FormData>(initialFormData);
     const [errors, setErrors] = useState<Partial<FormData>>({});
+    const [categories, setCategories] = useState<Category[]>([]);
     const { data: session, status } = useSession();
     const formRef = useRef<HTMLFormElement>(null);
 
@@ -90,7 +96,7 @@ export const AddProduct = () => {
     const handleImageUpload = (event: ChangeEvent<HTMLInputElement>, index: number) => {
         const file = event.target.files?.[0];
         const imageFields = ['mainImage', 'firstImage', 'secondImage', 'thirdImage'];
-    
+
         if (file && index >= 0 && index < imageFields.length) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -108,11 +114,28 @@ export const AddProduct = () => {
 
         if (!formData.name) newErrors.name = "Name is required";
         if (!formData.description) newErrors.description = "Description is required";
-        if (!formData.price || isNaN(Number(formData.price))) newErrors.price = "Valid price is required";        
+        if (!formData.price || isNaN(Number(formData.price))) newErrors.price = "Valid price is required";
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch('/api/proxy?path=all/category');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch categories');
+                }
+                const data = await response.json();
+                setCategories(data);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+
+        fetchCategories();
+    }, []);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -136,6 +159,7 @@ export const AddProduct = () => {
             price: Number(formData.price),
             quantity: Number(formData.quantity),
             discountPercentage: Number(formData.discountPercentage),
+            category: formData.category,
             // Add any other necessary conversions here
         };
 
@@ -198,7 +222,7 @@ export const AddProduct = () => {
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">General Information</h2>
-                            <form ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
+                            <form ref={formRef} onSubmit={handleSubmit} className='flex flex-col gap-5'>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Product Name</Label>
                                     <Input
@@ -287,7 +311,7 @@ export const AddProduct = () => {
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">Pricing</h2>
-                            <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
+                            <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Base Price</Label>
                                     <Input
@@ -317,7 +341,7 @@ export const AddProduct = () => {
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">Inventory</h2>
-                            <form className="grid grid-cols-3 gap-5" ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
+                            <form className="grid grid-cols-3 gap-5" ref={formRef} onSubmit={handleSubmit}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">SKU</Label>
                                     <Input
@@ -357,7 +381,7 @@ export const AddProduct = () => {
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">Notes</h2>
-                            <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
+                            <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Top Notes</Label>
                                     <Input
@@ -398,7 +422,7 @@ export const AddProduct = () => {
                     <Card className="mb-8 border-none bg-gray-50">
                         <CardContent className='py-5'>
                             <h2 className="text-xl font-semibold mb-4">Other</h2>
-                            <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit} style={{display: 'contents'}}>
+                            <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Appeal</Label>
                                     <Input
@@ -482,14 +506,13 @@ export const AddProduct = () => {
                                     <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="perfumes">Perfumes</SelectItem>
-                                    <SelectItem value="roll-on">Roll On</SelectItem>
-                                    <SelectItem value="air-freshener">Air Freshener</SelectItem>
-                                    <SelectItem value="body-mist">Body Mist</SelectItem>
-                                    <SelectItem value="reed-diffuser">Reed Diffuser</SelectItem>
+                                    {categories.map((category) => (
+                                        <SelectItem key={category._id} value={category._id}>
+                                            {category.name}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
-
                         </CardContent>
                     </Card>
                 </div>

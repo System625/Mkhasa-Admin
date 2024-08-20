@@ -10,8 +10,17 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = await fetch(`${process.env.BASE_URL}/${path}/${adminId}`);
+    // Construct the full API URL
+    let apiUrl = `${process.env.BASE_URL}/${path}`;
+
+    // Append adminId if it's not a categories request
+    if (path !== 'all/category' && adminId) {
+      apiUrl += `/${adminId}`;
+    }
+
+    const response = await fetch(apiUrl);
     const data = await response.json();
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('API error:', error);
@@ -30,7 +39,9 @@ export async function POST(request: Request) {
 
   try {
     const productData = await request.json();
-    const response = await fetch(`${process.env.BASE_URL}/${path}/${adminId}`, {
+    const apiUrl = `${process.env.BASE_URL}/${path}/${adminId}`;
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
