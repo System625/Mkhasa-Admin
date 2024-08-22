@@ -10,11 +10,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Construct the full API URL
     let apiUrl = `${process.env.BASE_URL}/${path}`;
 
     // Append adminId if it's not a categories request
-    if (path !== 'all/category' && adminId) {
+    if (path !== 'all/category' && path !== 'top/selling' && adminId) {
       apiUrl += `/${adminId}`;
     }
 

@@ -32,7 +32,7 @@ interface Order {
     code: string;
     name: string;
     email: string;
-    date?: string; // We'll need to generate this
+    date?: string; 
     total: number;
     status: string;
     items: Array<{
@@ -42,8 +42,8 @@ interface Order {
         price: number;
     }>;
     payment: boolean;
-    item: number; // Total number of items
-    delivery: string; // Always "Free Shipping"
+    item: number; 
+    delivery: string;
 }
 
 const LoadingSpinner = () => (

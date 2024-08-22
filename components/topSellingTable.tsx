@@ -1,76 +1,110 @@
-import React from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect } from 'react';
+
+interface TopSellingProduct {
+    totalQuantity: number;
+    product: {
+        _id: string;
+        name: string;
+        mainImage: string;
+        category: string;
+        totalQuantity: number;
+    };
+}
+
+const LoadingSpinner = () => (
+    <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-black"></div>
+    </div>
+);
 
 const TopSellingProductsTable = () => {
-    const products = [
-        {
-            id: 1,
-            category: 'Perfume',
-            name: 'Taskane Marina',
-            stock: 'In Stock',
-            stockStatus: 'in-stock', // 'in-stock' or 'out-of-stock'
-            totalSale: '280 pieces',
-            imageUrl: '/images/marina.png',
-        },
-        {
-            id: 2,
-            category: 'Roll on',
-            name: 'Nivea roll on',
-            stock: 'Out of stock',
-            stockStatus: 'out-of-stock',
-            totalSale: '300 pieces',
-            imageUrl: '/images/roll-on.png',
-        },
-        {
-            id: 3,
-            category: 'Body spray',
-            name: 'Nivea body spray',
-            stock: 'In Stock',
-            stockStatus: 'in-stock',
-            totalSale: '270 pieces',
-            imageUrl: '/images/body-spray.png',
-        },
-        // Add more products as needed
-    ];
+    const [products, setProducts] = useState<TopSellingProduct[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch('/api/proxy?path=top/selling');
+                const data = await response.json();
+                setProducts(data);
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const response = await fetch('/api/proxy?path=top/selling');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+                const data = await response.json();
+                setProducts(data);
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                // You can add additional error handling here, such as displaying an error message to the user
+            }
+        };
+        fetchProducts();
+    }, []);
 
     return (
         <div className="mt-6">
             <h2 className="text-xl font-bold mb-4">Top selling Product</h2>
-            <div className='overflow-x-auto'>
-                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-                    <thead>
-                        <tr className='text-left'>
-                            <th className="py-3 px-4 border-b">S/NO</th>
-                            <th className="py-3 px-4 border-b">Category</th>
-                            <th className="py-3 px-4 border-b">Product name</th>
-                            <th className="py-3 px-4 border-b">Stock</th>
-                            <th className="py-3 px-4 border-b">Total Sale</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.map((product, index) => (
-                            <tr key={product.id} className="hover:bg-gray-100">
-                                <td className="py-3 px-4 border-b text-xs md:text-sm lg:text-base">{index + 1}</td>
-                                <td className="py-3 px-4 border-b text-xs md:text-sm lg:text-base">{product.category}</td>
-                                <td className="py-3 px-4 border-b flex items-center space-x-3">
-                                    <Image
-                                        src={product.imageUrl}
-                                        alt={product.name}
-                                        className="rounded-full object-cover"
-                                        width={38}
-                                        height={38}
-                                    />
-                                    <span className='text-xs md:text-sm lg:text-base'>{product.name}</span>
-                                </td>
-                                <td className={`py-3 px-4 border-b text-xs md:text-sm lg:text-base ${product.stockStatus === 'in-stock' ? 'text-green-500' : 'text-red-500'}`}>
-                                    {product.stock}
-                                </td>
-                                <td className="py-3 px-4 border-b text-xs md:text-sm lg:text-base">{product.totalSale}</td>
+            {isLoading ? (
+                <LoadingSpinner />
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                        <thead>
+                            <tr className="text-left">
+                                <th className="py-3 px-4 border-b">S/NO</th>
+                                <th className="py-3 px-4 border-b">Category</th>
+                                <th className="py-3 px-4 border-b">Product name</th>
+                                <th className="py-3 px-4 border-b">Stock</th>
+                                <th className="py-3 px-4 border-b">Total Sale</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {products.map((product, index) => (
+                                <tr key={product.product._id} className="hover:bg-gray-100">
+                                    <td className="py-3 px-4 border-b text-xs md:text-sm lg:text-base">
+                                        {index + 1}
+                                    </td>
+                                    <td className="py-3 px-4 border-b text-xs md:text-sm lg:text-base">
+                                        {product.product.category}
+                                    </td>
+                                    <td className="py-3 px-4 border-b flex items-center space-x-3">
+                                        <img
+                                            src={product.product.mainImage}
+                                            alt={product.product.name}
+                                            className="rounded-full object-cover w-10 h-10"
+                                        />
+                                        <span className="text-xs md:text-sm lg:text-base">
+                                            {product.product.name}
+                                        </span>
+                                    </td>
+                                    <td
+                                        className={`py-3 px-4 border-b text-xs md:text-sm lg:text-base ${product.totalQuantity > 0 ? 'text-green-500' : 'text-red-500'
+                                            }`}
+                                    >
+                                        {product.totalQuantity > 0 ? 'In Stock' : 'Out of Stock'}
+                                    </td>
+                                    <td className="py-3 px-4 border-b text-xs md:text-sm lg:text-base">
+                                        {product.totalQuantity}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 };
