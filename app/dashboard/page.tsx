@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="mb-20">
+      <div className="mb-20">a
         <EarningsChart />
       </div>
       <TopSellingProductsTable />

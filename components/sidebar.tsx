@@ -15,11 +15,11 @@ const Sidebar = () => {
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Order</span>
           </Link>
         </li>
-        <li>
+        {/* <li>
           <Link href="/dashboard/item">
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Item</span>
           </Link>
-        </li>
+        </li> */}
         <li>
           <Link href="/dashboard/inventory">
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Inventory</span>

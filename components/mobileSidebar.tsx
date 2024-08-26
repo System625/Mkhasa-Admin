@@ -11,7 +11,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen }) => {
       <ul className="space-y-1 pt-16 pl-5">
         <li className="p-3 font-bold text-lg"><Link href="/dashboard">Dashboard</Link></li>
         <li className="p-3"><Link href="/dashboard/order">Order</Link></li>
-        <li className="p-3"><Link href="/dashboard/item">Item</Link></li>
+        {/* <li className="p-3"><Link href="/dashboard/item">Item</Link></li> */}
         <li className="p-3"><Link href="/dashboard/inventory">Inventory</Link></li>
         <li className="p-3"><Link href="/dashboard/category">Categories</Link></li>
         <li className="p-3"><Link href="/dashboard/slides">Slides</Link></li>
