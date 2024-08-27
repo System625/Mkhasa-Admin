@@ -15,6 +15,8 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen }) => {
         <li className="p-3"><Link href="/dashboard/inventory">Inventory</Link></li>
         <li className="p-3"><Link href="/dashboard/category">Categories</Link></li>
         <li className="p-3"><Link href="/dashboard/slides">Slides</Link></li>
+        <li className="p-3"><Link href="/dashboard/slides">Can Be Layered With</Link></li>
+        <li className="p-3"><Link href="/dashboard/slides">Frequently Bought Together</Link></li>
         <li className="p-3"><Link href="/dashboard/customers">Customers</Link></li>
         <li className="p-3"><Link href="/dashboard/vendors">Vendors</Link></li>
         <li className="p-3"><Link href="/dashboard/settings">Settings</Link></li>

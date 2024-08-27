@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
@@ -7,20 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Icon } from '@iconify/react';
 import { toast } from 'react-hot-toast';
 
-interface ProductDetails {
-    name: string;
-    category: string;
-    price: number;
-    // Add other properties as needed
-}
-
 interface Product {
     _id: string;
     name: string;
-    product?: ProductDetails;
     category?: string;
     price?: number;
-    isBestSeller?: boolean;
+    checked: boolean;
 }
 
 const LoadingSpinner = () => (
@@ -30,108 +20,83 @@ const LoadingSpinner = () => (
 );
 
 const BestSellersSlide = () => {
-    const [bestSellers, setBestSellers] = useState<Product[]>([]);
-    const [allProducts, setAllProducts] = useState<Product[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
-    const [loadingBestSellers, setLoadingBestSellers] = useState(true);
-    const [loadingAllProducts, setLoadingAllProducts] = useState(true);
+    const [loadingProducts, setLoadingProducts] = useState(true);
 
     useEffect(() => {
-        const loadInitialData = async () => {
-            console.log('Starting initial data load');
-            await fetchBestSellers();
-            await fetchAllProducts();
-            console.log('Finished initial data load');
-        };
-    
-        loadInitialData();
+        fetchData();
     }, []);   
 
-    const fetchBestSellers = async () => {
-        setLoadingBestSellers(true);
+    const fetchLayers = async () => {
+        const token = localStorage.getItem('token');
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/bestsellers', {
+            const response = await fetch("https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/all/products", {
+                method: "GET",
                 headers: {
                     'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+            });
+            if (!response.ok) throw new Error('Failed to fetch products');
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching products:", error);
+            toast.error('Failed to fetch products', { position: 'top-right' });
+            return [];
+        }
+    };
+
+    const fetchIndividualProduct = async () => {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch("https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/bestsellers", {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
             });
             if (!response.ok) throw new Error('Failed to fetch best sellers');
             const data = await response.json();
-            console.log('Fetched best sellers from server:', data);
-            if (Array.isArray(data) && data.length > 0) {
-                setBestSellers(data);
-                
-                // Update allProducts with the latest best seller information
-                setAllProducts(prevProducts => {
-                    return prevProducts.map(product => ({
-                        ...product,
-                        isBestSeller: data.some((bs: Product) => bs._id === product._id)
-                    }));
-                });
-            }
+            return data.map((item: any) => item.product._id);
         } catch (error) {
-            console.error('Error fetching best sellers:', error);
-            toast.error('Failed to fetch best sellers');
-        } finally {
-            setLoadingBestSellers(false);
+            console.error("Error fetching best sellers:", error);
+            toast.error('Failed to fetch best sellers', { position: 'top-right' });
+            return [];
         }
     };
 
-    const fetchAllProducts = async () => {
-        setLoadingAllProducts(true);
+    const processProduct = async (bestSellerIds: string[], allProducts: Product[]) => {
+        const bestSellerIdSet = new Set(bestSellerIds);
+        return allProducts.map(product => ({
+            ...product,
+            checked: bestSellerIdSet.has(product._id)
+        }));
+    };
+
+    const fetchData = async () => {
+        setLoadingProducts(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/all/products', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-            if (!response.ok) throw new Error('Failed to fetch all products');
-            const data = await response.json();
-            // Mark best sellers
-            const productsWithBestSellerFlag = data.map((product: Product) => ({
-                ...product,
-                isBestSeller: bestSellers.some(bs => bs._id === product._id)
-            }));
-            setAllProducts(productsWithBestSellerFlag);
+            const allProducts = await fetchLayers();
+            const bestSellerIds = await fetchIndividualProduct();
+            const processedProducts = await processProduct(bestSellerIds, allProducts);
+            setProducts(processedProducts);
         } catch (error) {
-            console.error('Error fetching all products:', error);
-            toast.error('Failed to fetch all products');
+            console.error("Error fetching and processing data:", error);
+            toast.error('Failed to fetch and process data', { position: 'top-right' });
         } finally {
-            setLoadingAllProducts(false);
+            setLoadingProducts(false);
         }
     };
 
-    const addBestSeller = (product: Product) => {
-        if (!product.isBestSeller) {
-            const newBestSeller: Product = {
-                _id: product._id,
-                name: product.name,
-                product: {
-                    name: product.name,
-                    category: product.category || 'N/A',
-                    price: product.price || 0,
-                },
-                isBestSeller: true
-            };
-            setBestSellers(prevBestSellers => [...prevBestSellers, newBestSeller]);
-            setAllProducts(prevProducts =>
-                prevProducts.map(p =>
-                    p._id === product._id ? { ...p, isBestSeller: true } : p
-                )
-            );
-        } else {
-            toast.error('This product is already in the Best Sellers list');
-        }
-    };
-    
-    const removeBestSeller = (productId: string) => {
-        setBestSellers(prevBestSellers => prevBestSellers.filter(item => item._id !== productId));
-        setAllProducts(prevProducts =>
-            prevProducts.map(p =>
-                p._id === productId ? { ...p, isBestSeller: false } : p
+    const handleCheckboxChange = (productId: string) => {
+        setProducts(prevProducts => 
+            prevProducts.map(product => 
+                product._id === productId 
+                    ? { ...product, checked: !product.checked } 
+                    : product
             )
         );
     };
@@ -139,47 +104,38 @@ const BestSellersSlide = () => {
     const handleSaveAndContinue = async () => {
         setLoading(true);
         const token = localStorage.getItem('token');
-    
-        const currentBestSellers = bestSellers.map(item => item._id);
-        const requestBody = { productIds: currentBestSellers };
-    
+        
+        const selectedProductIds = products.filter(product => product.checked).map(product => product._id);
+        
         try {
             const response = await fetch('https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/bestsellers', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(requestBody),
+                body: JSON.stringify({ productIds: selectedProductIds })
             });
-    
-            if (!response.ok) {
-                throw new Error('Failed to save best sellers');
-            }
-    
-            toast.success('Best sellers saved successfully');
             
-            // After successful save, fetch the updated list from the server
-            await fetchBestSellers();
+            if (!response.ok) throw new Error('Failed to update best sellers');
             
+            toast.success('Best sellers updated successfully');            
         } catch (error) {
-            console.error('Error saving best sellers:', error);
-            toast.error('An error occurred while saving best sellers');
+            console.error('Error updating best sellers:', error);
+            toast.error('An error occurred while updating best sellers', { position: 'top-right' });
         } finally {
             setLoading(false);
         }
     };
-    
 
-
-    const filteredProducts = allProducts.filter(product =>
+    const filteredProducts = products.filter(product =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
         <>
             <div className="mb-6">
-                {loadingBestSellers ? (
+                {loadingProducts ? (
                     <LoadingSpinner />
                 ) : (
                     <Table>
@@ -192,13 +148,20 @@ const BestSellersSlide = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {bestSellers.map((item) => (
-                                <TableRow key={item._id}>
-                                    <TableCell>{item.product ? item.product.name : item.name}</TableCell>
-                                    <TableCell>{item.product ? item.product.category : 'N/A'}</TableCell>
-                                    <TableCell>{item.product ? item.product.price : 'N/A'}</TableCell>
+                            {products.filter(product => product.checked).map((product) => (
+                                <TableRow key={product._id}>
+                                    <TableCell>{product.name}</TableCell>
+                                    <TableCell>{product.category || 'N/A'}</TableCell>
+                                    <TableCell>{product.price || 'N/A'}</TableCell>
                                     <TableCell>
-                                        <Button size="sm" variant="outline" onClick={() => removeBestSeller(item._id)} className="hover:bg-black hover:text-white rounded-none">Remove</Button>
+                                        <Button 
+                                            size="sm" 
+                                            variant="outline" 
+                                            onClick={() => handleCheckboxChange(product._id)} 
+                                            className="hover:bg-black hover:text-white rounded-none"
+                                        >
+                                            Remove
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -207,7 +170,11 @@ const BestSellersSlide = () => {
                 )}
             </div>
 
-            <Button className="w-full mb-6 rounded-none bg-black" onClick={handleSaveAndContinue} disabled={loading}>
+            <Button 
+                className="w-full mb-6 rounded-none bg-black" 
+                onClick={handleSaveAndContinue} 
+                disabled={loading}
+            >
                 {loading ? <LoadingSpinner /> : 'Save & Continue'}
             </Button>
 
@@ -231,7 +198,7 @@ const BestSellersSlide = () => {
                         <Icon icon="mynaui:search" style={{ fontSize: 20 }} />
                     </button>
                 </form>
-                {loadingAllProducts ? (
+                {loadingProducts ? (
                     <LoadingSpinner />
                 ) : (
                     <ul className="space-y-2 w-full lg:w-[60%]">
@@ -243,18 +210,9 @@ const BestSellersSlide = () => {
                                         size="sm"
                                         variant="outline"
                                         className='hover:bg-black hover:text-white rounded-none'
-                                        onClick={() => addBestSeller(product)}
-                                        disabled={product.isBestSeller}
+                                        onClick={() => handleCheckboxChange(product._id)}
                                     >
-                                        {product.isBestSeller ? 'Added' : '+'}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => removeBestSeller(product._id)}
-                                        className="ml-5 hover:bg-black hover:text-white rounded-none"
-                                    >
-                                        -
+                                        {product.checked ? 'Added' : '+'}
                                     </Button>
                                 </div>
                             </li>

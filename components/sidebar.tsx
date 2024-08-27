@@ -36,6 +36,16 @@ const Sidebar = () => {
           </Link>
         </li>
         <li>
+          <Link href="/dashboard/slides">
+            <span className="p-3 cursor-pointer hover:bg-gray-200 block">Can Be Layered With</span>
+          </Link>
+        </li>
+        <li>
+          <Link href="/dashboard/slides">
+            <span className="p-3 cursor-pointer hover:bg-gray-200 block">Frequently Bought Together</span>
+          </Link>
+        </li>
+        <li>
           <Link href="/dashboard/customers">
             <span className="p-3 cursor-pointer hover:bg-gray-200 block">Customers</span>
           </Link>

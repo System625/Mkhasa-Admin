@@ -6,7 +6,6 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { Icon } from "@iconify/react";
 import CustomerMetric from "./customerMetric";
 import Link from "next/link";
-import { customers } from '@/data/customers';
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 

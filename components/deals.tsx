@@ -19,7 +19,7 @@ const LoadingSpinner = () => (
     </div>
 );
 
-const NewInSlide = () => {
+const DealsSlide = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
@@ -51,36 +51,19 @@ const NewInSlide = () => {
     const fetchIndividualProduct = async () => {
         const token = localStorage.getItem('token');
         try {
-            const response = await fetch("https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/in", {
+            const response = await fetch("https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/deal/product", {
                 method: "GET",
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
             });
-            if (!response.ok) throw new Error('Failed to fetch new in');
+            if (!response.ok) throw new Error('Failed to fetch deals');
             const data = await response.json();
-            
-            // Check if data is an array and handle accordingly
-            if (Array.isArray(data)) {
-                return data.map((item: any) => {
-                    // Check if item has a product property, if not, assume item itself is the product
-                    if (item.product && item.product._id) {
-                        return item.product._id;
-                    } else if (item._id) {
-                        return item._id;
-                    }
-                    // If neither condition is met, log the item for debugging
-                    console.log('Unexpected item structure:', item);
-                    return null;
-                }).filter((id: string | null) => id !== null); // Remove any null values
-            } else {
-                console.error("Unexpected response format:", data);
-                return [];
-            }
+            return data.map((item: any) => item.product._id);
         } catch (error) {
-            console.error("Error fetching new in:", error);
-            toast.error('Failed to fetch new in', { position: 'top-right' });
+            console.error("Error fetching deals:", error);
+            toast.error('Failed to fetch deals', { position: 'top-right' });
             return [];
         }
     };
@@ -125,7 +108,7 @@ const NewInSlide = () => {
         const selectedProductIds = products.filter(product => product.checked).map(product => product._id);
         
         try {
-            const response = await fetch('https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/in', {
+            const response = await fetch('https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/deal', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -134,12 +117,12 @@ const NewInSlide = () => {
                 body: JSON.stringify({ productIds: selectedProductIds })
             });
             
-            if (!response.ok) throw new Error('Failed to update new in');
+            if (!response.ok) throw new Error('Failed to update deals');
             
-            toast.success('new in updated successfully');            
+            toast.success('deals updated successfully');            
         } catch (error) {
-            console.error('Error updating new in:', error);
-            toast.error('An error occurred while updating new in', { position: 'top-right' });
+            console.error('Error updating deals:', error);
+            toast.error('An error occurred while updating deals', { position: 'top-right' });
         } finally {
             setLoading(false);
         }
@@ -196,7 +179,7 @@ const NewInSlide = () => {
             </Button>
 
             <div>
-                <h2 className="text-base font-semibold text-center md:text-left bg-gray-50 py-1 pl-2 mb-6">Add New In</h2>
+                <h2 className="text-base font-semibold text-center md:text-left bg-gray-50 py-1 pl-2 mb-6">Add Deals</h2>
                 <form className="w-full md:flex-grow lg:max-w-[50%] relative mb-4 lg:mt-0" onSubmit={(e) => e.preventDefault()}>
                     <Input
                         id="search"
@@ -241,4 +224,4 @@ const NewInSlide = () => {
     );
 };
 
-export default NewInSlide;
+export default DealsSlide;

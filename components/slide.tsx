@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Heading } from '@/components/heading';
 import NewInSlide from './newInSlide';
-import CanBeLayeredWithSlide from './canBeLayeredWithSlide';
-import SimilarItemsSlide from './similarItemsSlide';
+// import CanBeLayeredWithSlide from './canBeLayeredWithSlide';
+import DealsSlide from './deals';
 import BestSellersSlide from './bestSellersSlide';
-import FrequentlyBoughtSlide from './frequentlyBoughtSlide';
+import FeaturedSlide from './featured';
+// import FrequentlyBoughtSlide from './frequentlyBoughtSlide';
 
 const LoadingSpinner = () => (
     <div className="flex justify-center items-center h-64">
@@ -43,9 +44,9 @@ export default function SlideManagement() {
                             <SelectContent className='rounded-none bg-gray-100'>
                                 <SelectItem value="new-in">New In</SelectItem>
                                 <SelectItem value="best-sellers">Best Sellers</SelectItem>
-                                <SelectItem value="similar-items">Similar Items</SelectItem>
-                                <SelectItem value="can-be-layered-with">Can Be Layered With</SelectItem>
-                                <SelectItem value="frequently-bought-together">Frequently Bought Together</SelectItem>
+                                <SelectItem value="featured">Featured</SelectItem>
+                                <SelectItem value="deals">Deals</SelectItem>
+                                {/* <SelectItem value="frequently-bought-together">Frequently Bought Together</SelectItem> */}
                             </SelectContent>
                         </Select>
                     </div>
@@ -57,9 +58,9 @@ export default function SlideManagement() {
                     <>
                         {selectedSlide === 'best-sellers' && <BestSellersSlide />}
                         {selectedSlide === 'new-in' && <NewInSlide />}
-                        {selectedSlide === 'can-be-layered-with' && <CanBeLayeredWithSlide />}
-                        {selectedSlide === 'similar-items' && <SimilarItemsSlide />}
-                        {selectedSlide === 'frequently-bought-together' && <FrequentlyBoughtSlide />}
+                        {selectedSlide === 'featured' && <FeaturedSlide />}
+                        {selectedSlide === 'deals' && <DealsSlide />}
+                        {/* {selectedSlide === 'frequently-bought-together' && <FrequentlyBoughtSlide />} */}
                     </>
                 )}
             </main>
