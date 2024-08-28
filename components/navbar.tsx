@@ -83,13 +83,13 @@ const NavbarIcons: React.FC = () => {
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-48">
           <DropdownMenuItem asChild>
-            <Link href="/admin/edit-product">Edit Product</Link>
+            <Link href="/dashboard/add-product">Edit Product</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/admin/edit-price">Edit Price</Link>
+            <Link href="/dashboard/add-product">Edit Price</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/admin/edit-vendor">Edit Vendor</Link>
+          <DropdownMenuItem onClick={openModal}>
+            <span>Edit Vendor</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -110,7 +110,7 @@ const NavbarIcons: React.FC = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Link href="/admin/user" className="flex items-center gap-2">
+      <Link href="/dashboard/settings" className="flex items-center gap-2">
         <Icon icon="mdi:account" style={{ fontSize: 24 }} />
         <span>User</span>
       </Link>

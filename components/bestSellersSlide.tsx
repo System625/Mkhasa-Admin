@@ -91,16 +91,6 @@ const BestSellersSlide = () => {
         }
     };
 
-    const handleCheckboxChange = (productId: string) => {
-        setProducts(prevProducts => 
-            prevProducts.map(product => 
-                product._id === productId 
-                    ? { ...product, checked: !product.checked } 
-                    : product
-            )
-        );
-    };
-
     const handleSaveAndContinue = async () => {
         setLoading(true);
         const token = localStorage.getItem('token');
@@ -132,6 +122,26 @@ const BestSellersSlide = () => {
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const handleAddProduct = (productId: string) => {
+        setProducts(prevProducts => 
+            prevProducts.map(product => 
+                product._id === productId 
+                    ? { ...product, checked: true } 
+                    : product
+            )
+        );
+    };
+
+    const handleRemoveProduct = (productId: string) => {
+        setProducts(prevProducts => 
+            prevProducts.map(product => 
+                product._id === productId 
+                    ? { ...product, checked: false } 
+                    : product
+            )
+        );
+    };
+
     return (
         <>
             <div className="mb-6">
@@ -141,10 +151,10 @@ const BestSellersSlide = () => {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Similar Items</TableHead>
+                                <TableHead>Product Name</TableHead>
                                 <TableHead>Category</TableHead>
                                 <TableHead>Stock</TableHead>
-                                <TableHead>Action</TableHead>
+                                <TableHead>Price</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -152,17 +162,12 @@ const BestSellersSlide = () => {
                                 <TableRow key={product._id}>
                                     <TableCell>{product.name}</TableCell>
                                     <TableCell>{product.category || 'N/A'}</TableCell>
-                                    <TableCell>{product.price || 'N/A'}</TableCell>
                                     <TableCell>
-                                        <Button 
-                                            size="sm" 
-                                            variant="outline" 
-                                            onClick={() => handleCheckboxChange(product._id)} 
-                                            className="hover:bg-black hover:text-white rounded-none"
-                                        >
-                                            Remove
-                                        </Button>
+                                        <span className={product.price && product.price > 0 ? 'text-green-500' : 'text-red-500'}>
+                                            {product.price && product.price > 0 ? 'In Stock' : 'Out of Stock'}
+                                        </span>
                                     </TableCell>
+                                    <TableCell>{product.price ? `₦${product.price.toFixed(2)}` : 'N/A'}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -205,14 +210,24 @@ const BestSellersSlide = () => {
                         {filteredProducts.map((product) => (
                             <li key={product._id} className="flex justify-between w-full items-center">
                                 <span className='line-clamp-1'>{product.name}</span>
-                                <div className='flex'>
+                                <div className='flex gap-3'>
                                     <Button
                                         size="sm"
                                         variant="outline"
                                         className='hover:bg-black hover:text-white rounded-none'
-                                        onClick={() => handleCheckboxChange(product._id)}
+                                        onClick={() => handleAddProduct(product._id)}
+                                        disabled={product.checked}
                                     >
                                         {product.checked ? 'Added' : '+'}
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className='hover:bg-black hover:text-white rounded-none'
+                                        onClick={() => handleRemoveProduct(product._id)}
+                                        disabled={!product.checked}
+                                    >
+                                        -
                                     </Button>
                                 </div>
                             </li>

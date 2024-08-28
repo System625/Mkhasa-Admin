@@ -425,25 +425,37 @@ export const AddProduct = () => {
                             <form className="grid gap-5" ref={formRef} onSubmit={handleSubmit}>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Appeal</Label>
-                                    <Input
-                                        type="text"
-                                        name="appeal"
+                                    <Select
                                         value={formData.appeal}
-                                        onChange={handleChange}
-                                        className='bg-white border-gray-200'
-                                    />
-                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.appeal}</p>}
+                                        onValueChange={(value) => handleChange({ target: { name: 'appeal', value } } as any)}
+                                    >
+                                        <SelectTrigger className="bg-transparent rounded-sm">
+                                            <SelectValue placeholder="Select Appeal" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="men">Men</SelectItem>
+                                            <SelectItem value="women">Women</SelectItem>
+                                            <SelectItem value="unisex">Unisex</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Type</Label>
-                                    <Input
-                                        type="text"
-                                        name="type"
+                                    <Select
                                         value={formData.type}
-                                        onChange={handleChange}
-                                        className='bg-white border-gray-200'
-                                    />
-                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
+                                        onValueChange={(value) => handleChange({ target: { name: 'type', value } } as any)}
+                                    >
+                                        <SelectTrigger className="bg-transparent rounded-sm">
+                                            <SelectValue placeholder="Select Type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="cologne">Cologne</SelectItem>
+                                            <SelectItem value="eau-de-toillete">Eau de Toillete</SelectItem>
+                                            <SelectItem value="eau-de-parfum">Eau de Parfum</SelectItem>
+                                            <SelectItem value="parfum">Parfum</SelectItem>
+                                            <SelectItem value="extrait-de-parfum">Extrait de Parfum</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Volume</Label>
