@@ -68,7 +68,7 @@ const TopSellingProductsTable = () => {
                                 <th className="py-3 px-4 border-b">Category</th>
                                 <th className="py-3 px-4 border-b">Product name</th>
                                 <th className="py-3 px-4 border-b">Stock</th>
-                                <th className="py-3 px-4 border-b">Total Sale</th>
+                                <th className="py-3 px-4 border-b text-center">Total Sale</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -96,7 +96,7 @@ const TopSellingProductsTable = () => {
                                     >
                                         {product.totalQuantity > 0 ? 'In Stock' : 'Out of Stock'}
                                     </td>
-                                    <td className="py-3 px-4 border-b text-xs md:text-sm lg:text-base">
+                                    <td className="py-3 px-4 border-b text-center text-xs md:text-sm lg:text-base">
                                         {product.totalQuantity}
                                     </td>
                                 </tr>

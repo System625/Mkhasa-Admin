@@ -29,12 +29,12 @@ type FormData = {
     serialBarcode: string;
     barcode: string;
     sku: string;
-    quantity: string;
+    quantity: string; 
     discountPercentage: string;
     appeal: string;
     manufacturer: string;
     serialName: string;
-    addSeries: boolean;
+    // addSeries: boolean;
     thumbnailDescription: string;
 };
 
@@ -67,7 +67,7 @@ export const AddProduct = () => {
         appeal: '',
         manufacturer: '',
         serialName: '',
-        addSeries: false,
+        // addSeries: false,
         thumbnailDescription: '',
     };
     const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -75,6 +75,7 @@ export const AddProduct = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const { data: session, status } = useSession();
     const formRef = useRef<HTMLFormElement>(null);
+    const [isLoading, setIsLoading] = useState(false); 
 
     const handleDiscardChanges = () => {
         setFormData(initialFormData);
@@ -93,19 +94,13 @@ export const AddProduct = () => {
         }
     };
 
-    const handleImageUpload = (event: ChangeEvent<HTMLInputElement>, index: number) => {
+    const handleImageUpload = (event: ChangeEvent<HTMLInputElement>, fieldName: keyof FormData) => {
         const file = event.target.files?.[0];
-        const imageFields = ['mainImage', 'firstImage', 'secondImage', 'thirdImage'];
-
-        if (file && index >= 0 && index < imageFields.length) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setFormData(prev => ({
-                    ...prev,
-                    [imageFields[index]]: e.target?.result as string,
-                }));
-            };
-            reader.readAsDataURL(file);
+        if (file) {
+            setFormData(prev => ({
+                ...prev,
+                [fieldName]: file,
+            }));
         }
     };
 
@@ -114,7 +109,7 @@ export const AddProduct = () => {
 
         if (!formData.name) newErrors.name = "Name is required";
         if (!formData.description) newErrors.description = "Description is required";
-        if (!formData.price || isNaN(Number(formData.price))) newErrors.price = "Valid price is required";
+        if (!formData.price || isNaN(Number(formData.price))) newErrors.price = "Valid price is required";        
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -139,66 +134,64 @@ export const AddProduct = () => {
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-
+    
         if (!validateForm()) {
             toast.error("Please correct the errors in the form");
             return;
         }
-
+    
         if (status !== "authenticated" || !session?.user?._id) {
             console.error("User is not authenticated or user ID is missing");
             toast.error("Authentication error");
             return;
         }
-
+    
+        setIsLoading(true);
+        const token = localStorage.getItem('token');
+    
         const adminId = session.user._id;
-
-        // Convert form data to match API expectations
-        const productData = {
-            ...formData,
-            price: Number(formData.price),
-            quantity: Number(formData.quantity),
-            discountPercentage: Number(formData.discountPercentage),
-            category: formData.category,
-            // Add any other necessary conversions here
-        };
-
+    
         try {
-            // Upload images first (pseudo-code, implement according to your image upload solution)
-            const imageUrls = await Promise.all(
-                ['mainImage', 'firstImage', 'secondImage', 'thirdImage'].map(async (field) => {
-                    if (formData[field as keyof FormData]) {
-                        // return await uploadImage(formData[field as keyof FormData] as File);
-                        return "URL_PLACEHOLDER"; // Replace with actual upload logic
-                    }
-                    return null;
-                })
-            );
-
-            // Add image URLs to productData
-            productData.mainImage = imageUrls[0] || "";
-            productData.firstImage = imageUrls[1] || "";
-            productData.secondImage = imageUrls[2] || "";
-            productData.thirdImage = imageUrls[3] || "";
-
-            const response = await fetch(`/api/proxy?path=add/product&adminId=${adminId}`, {
+            const formDataToSend = new FormData();
+    
+            // Append all text fields
+            Object.entries(formData).forEach(([key, value]) => {
+                if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                    formDataToSend.append(key, value.toString());
+                }
+            });
+    
+            // Append file fields
+            ['mainImage', 'firstImage', 'secondImage', 'thirdImage'].forEach((field) => {
+                const file = formData[field as keyof FormData] as File | null;
+                if (file) {
+                    formDataToSend.append(field, file);
+                }
+            });
+    
+            const response = await fetch(`https://mkhasa-bfdb6fabd978.herokuapp.com/api/v1/add/product/${adminId}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                    // Remove 'Content-Type': 'application/json' header
                 },
-                body: JSON.stringify(productData),
+                body: formDataToSend, // Use formDataToSend instead of JSON.stringify(formData)
             });
-
+    
             if (!response.ok) {
-                throw new Error('Failed to add product');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to add product');
             }
-
+    
             const result = await response.json();
             console.log(result);
-            toast.success("Product added successfully");
+            toast.success("Product added successfully");    
+            handleDiscardChanges(); // Reset form after successful submission
         } catch (error) {
             console.error('Error adding product:', error);
-            toast.error("Failed to add product");
+            toast.error(error instanceof Error ? error.message : "Failed to add product");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -244,10 +237,10 @@ export const AddProduct = () => {
                                     />
                                     {errors.name && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
                                 </div>
-                                <div>
+                                {/* <div>
                                     <Select
                                         value={formData.category}
-                                        onValueChange={(value) => handleChange({ target: { name: 'category', value } } as any)}
+                                        onValueChange={(value) => handleChange({ target: { name: 'addSeries', value } } as any)}
                                     >
                                         <SelectTrigger className="bg-transparent rounded-sm">
                                             <SelectValue placeholder="Add Series" />
@@ -258,7 +251,7 @@ export const AddProduct = () => {
                                             <SelectItem value="series3">Series 3</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                </div>
+                                </div> */}
                                 <div className='flex flex-col gap-2'>
                                     <Label className="block text-sm font-medium text-gray-700">Serial Name</Label>
                                     <Input
@@ -482,30 +475,24 @@ export const AddProduct = () => {
                             <p className="text-gray-500 mb-4">Photo Product</p>
                             <div className="border-2 border-dashed border-gray-400 p-4 bg-white">
                                 <div className="grid grid-cols-2 gap-4 mb-4">
-                                    {(['mainImage', 'firstImage', 'secondImage', 'thirdImage'] as Array<keyof FormData>).map((field, index) => (
+                                    {(['mainImage', 'firstImage', 'secondImage', 'thirdImage'] as const).map((field) => (
                                         <div key={field} className="relative aspect-square border border-gray-300 bg-gray-50">
                                             <input
                                                 type="file"
-                                                onChange={(e) => handleImageUpload(e, index)}
+                                                onChange={(e) => handleImageUpload(e, field)}
                                                 accept="image/*"
                                                 className="absolute inset-0 opacity-0 cursor-pointer"
                                             />
                                             {formData[field] && (
                                                 <img
-                                                    src={formData[field] as string} // Type assertion to string
+                                                    src={URL.createObjectURL(formData[field] as File)}
                                                     alt="Uploaded preview"
                                                     className="absolute inset-0 object-cover w-full h-full"
                                                 />
                                             )}
                                         </div>
                                     ))}
-                                </div>
-                                <button
-                                    type="button"
-                                    className="w-full py-2 text-blue-500 border font-semibold border-blue-500 rounded-lg hover:bg-blue-50"
-                                >
-                                    Add More Images
-                                </button>
+                                </div>                                
                             </div>
                         </CardContent>
                     </Card>
@@ -519,7 +506,7 @@ export const AddProduct = () => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {categories.map((category) => (
-                                        <SelectItem key={category._id} value={category._id}>
+                                        <SelectItem key={category.name} value={category.name}>
                                             {category.name}
                                         </SelectItem>
                                     ))}

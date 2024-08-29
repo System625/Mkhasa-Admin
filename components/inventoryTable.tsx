@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Heading } from '@/components/heading';
 import { SubHeading } from '@/components/subHeading';
 import Link from "next/link";
+import { useSession } from 'next-auth/react';
+import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 interface Product {
     id: string;
@@ -36,39 +39,39 @@ const InventoryTable = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const productsPerPage = 10;
     const [loading, setLoading] = useState(false);
+    const { data: session, status } = useSession();
+    const router = useRouter();
 
     useEffect(() => {
-        // Fetch data from the API endpoint
-        const fetchProducts = async () => {
-            setLoading(true);
-            try {
-                const response = await fetch('/api/proxy?path=all/products');
-                const data = await response.json();
-
-                // Map the response to match the Product interface
-                const formattedProducts = data.map((item: any) => ({
-                    id: item._id,
-                    name: item.name,
-                    price: `₦${item.price}`,
-                    imageUrl: item.mainImage,
-                    category: item.category,
-                    inventory: {
-                        quantity: 0, // Default value, you can update it as needed
-                        unit: "Pieces", // Default value, you can update it as needed
-                        total: 0, // Default value, you can update it as needed
-                    },
-                }));
-
-                setProducts(formattedProducts);
-            } catch (error) {
-                console.error('Error fetching products:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchProducts();
     }, []);
+
+    const fetchProducts = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/proxy?path=all/products');
+            const data = await response.json();
+
+            const formattedProducts = data.map((item: any) => ({
+                id: item._id,
+                name: item.name,
+                price: `₦${item.price}`,
+                imageUrl: item.mainImage,
+                category: item.category,
+                inventory: {
+                    quantity: 0,
+                    unit: "Pieces",
+                    total: 0,
+                },
+            }));
+
+            setProducts(formattedProducts);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleQuantityChange = (id: string, quantity: number) => {
         setProducts((prevProducts) =>
@@ -94,33 +97,39 @@ const InventoryTable = () => {
         );
     };
 
-    const handleRefresh = async () => {
-        // Implement your refresh logic here
-        setLoading(true);
-            try {
-                const response = await fetch('/api/proxy?path=all/products');
-                const data = await response.json();
+    const handleRefresh = () => {
+        fetchProducts();
+    };
 
-                // Map the response to match the Product interface
-                const formattedProducts = data.map((item: any) => ({
-                    id: item._id,
-                    name: item.name,
-                    price: `₦${item.price}`,
-                    imageUrl: item.mainImage,
-                    category: item.category,
-                    inventory: {
-                        quantity: 0, // Default value, you can update it as needed
-                        unit: "Pieces", // Default value, you can update it as needed
-                        total: 0, // Default value, you can update it as needed
-                    },
-                }));
+    const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value);
+        setCurrentPage(1); // Reset to first page when searching
+    };
 
-                setProducts(formattedProducts);
-            } catch (error) {
-                console.error('Error fetching products:', error);
-            } finally {
-                setLoading(false);
+    const handleDelete = async (productId: string) => {
+        // Assuming you have the adminId stored somewhere, replace 'YOUR_ADMIN_ID' with the actual admin ID 
+
+        if (status !== "authenticated" || !session?.user?._id) {
+            console.error("User is not authenticated or user ID is missing");
+            toast.error("Authentication error");
+            return;
+        }
+
+        const adminId = session.user._id;       
+        try {
+            const response = await fetch(`/api/proxy?path=product/${adminId}/${productId}`, {
+                method: 'DELETE',
+            });
+            if (response.ok) {
+                // Remove the deleted product from the state
+                setProducts(products.filter(product => product.id !== productId));
+                toast.success("Product deleted successfully"); 
+            } else {
+                console.error('Failed to delete product');
             }
+        } catch (error) {
+            console.error('Error deleting product:', error);
+        }
     };
 
     // Pagination logic
@@ -138,10 +147,6 @@ const InventoryTable = () => {
         const total = Math.ceil(filtered.length / productsPerPage);
         return { filteredOrders: filtered, displayedProducts: displayed, totalPages: total };
     }, [products, searchTerm, currentPage, productsPerPage]);
-
-    const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(event.target.value);
-    };
 
     const handlePageChange = (pageNumber: number) => {
         setCurrentPage(pageNumber);
@@ -193,6 +198,13 @@ const InventoryTable = () => {
             <div className="flex flex-col md:flex-row justify-between items-center my-4 md:mt-0">
                 <h2 className="text-xl font-semibold">List Of All Products</h2>
                 <div className="flex gap-2 items-center">
+                    <Input
+                        type="text"
+                        placeholder="Search products..."
+                        value={searchTerm}
+                        onChange={handleSearch}
+                        className="w-64"
+                    />
                     <h2 className="text-lg text-gray-400">Recently Update</h2>
                     <Icon icon="bx:refresh" className="cursor-pointer" onClick={handleRefresh} fontSize={24} />
                 </div>
@@ -207,6 +219,7 @@ const InventoryTable = () => {
                             <TableHead>Product</TableHead>
                             <TableHead>Price</TableHead>
                             <TableHead className="text-center">Inventory</TableHead>
+                            <TableHead className="text-center">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -252,7 +265,7 @@ const InventoryTable = () => {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="flex items-center border pr-2 rounded-md h-10">
+                                    <div className="flex items-center justify-center border pr-2 rounded-md h-10">
                                         <Input
                                             type="number"
                                             value={product.inventory.total}
@@ -261,12 +274,22 @@ const InventoryTable = () => {
                                         />
                                         <span className="text-xs md:text-base">Total</span>
                                     </div>
-                                    <Button
-                                        onClick={() => console.log("Add action for product", product.id)}
-                                        className='bg-[#3B9BCE] text-xs md:text-base'
-                                    >
-                                        Add
-                                    </Button>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex gap-2 items-center justify-center">
+                                        <Button
+                                            onClick={() => router.push(`/dashboard/edit-product/${product.id}`)}
+                                            className='bg-[#3B9BCE] text-xs md:text-base'
+                                        >
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            onClick={() => handleDelete(product.id)}
+                                            className='bg-[#3B9BCE] text-xs md:text-base'
+                                        >
+                                            delete
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
